@@ -15,10 +15,10 @@
     <nav class="navigation">
       <ul class="nav-list">
         <li class="nav-item">
-          <a href="#" class="nav-link active">Home</a>
+          <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">Home</router-link>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">About NID</a>
+          <router-link to="/nid" class="nav-link" :class="{ active: $route.path.startsWith('/nid') }">About NID</router-link>
         </li>
         <li class="nav-item">
           <a href="#" class="nav-link">NID Branch</a>

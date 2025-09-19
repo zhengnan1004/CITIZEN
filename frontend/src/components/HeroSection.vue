@@ -105,7 +105,7 @@ export default {
   margin: 0 auto;
   padding: 60px 40px 0;
   gap: 60px;
-  transform: translate(120px, -40px);
+  transform: translate(80px, -60px);
 }
 
 .text-section {
@@ -114,16 +114,16 @@ export default {
   max-width: 600px;
   flex: 1;
   padding: 40px 0 0;
-  margin-left: 40px;
+  margin-left: 20px;
 }
 
 .main-title {
-  font-size: 5rem;
-  font-weight: 900;
+  font-size: 4.5rem;
+  font-weight: 650;
   line-height: 1.0;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
   color: #000;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.01em;
 }
 
 .title-line {
@@ -132,10 +132,10 @@ export default {
 
 .subtitle {
   font-size: 1.4rem;
-  margin-bottom: 50px;
+  margin-bottom: 70px;
   color: #000;
   line-height: 1.5;
-  font-weight: 500;
+  font-weight: 380;
   max-width: 500px;
 }
 
@@ -145,6 +145,7 @@ export default {
   gap: 15px;
   justify-content: flex-start;
   align-items: center;
+  margin-top: -30px;
 }
 
 .download-btn {

@@ -20,22 +20,22 @@
           <nav class="navigation">
             <ul class="nav-list">
               <li class="nav-item">
-                <a href="#" class="nav-link active">Home</a>
+                <router-link to="/" class="nav-link" :class="{ active: $route.path === '/' }">Home</router-link>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link">About NID</a>
+                <router-link to="/nid" class="nav-link" :class="{ active: $route.path.startsWith('/nid') }">About NID</router-link>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link">NID Branch</a>
+                <router-link to="/branch" class="nav-link" :class="{ active: $route.path.startsWith('/branch') }">NID Branch</router-link>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link">Application Status</a>
+                <router-link to="/application" class="nav-link" :class="{ active: $route.path.startsWith('/application') }">Application Status</router-link>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link">Contact Us</a>
+                <router-link to="/contact" class="nav-link" :class="{ active: $route.path.startsWith('/contact') }">Contact Us</router-link>
               </li>
               <li class="nav-item">
-                <a href="#" class="nav-link">FAQ</a>
+                <router-link to="/faq" class="nav-link" :class="{ active: $route.path.startsWith('/faq') }">FAQ</router-link>
               </li>
             </ul>
           </nav>
@@ -51,18 +51,19 @@
 
     <!-- 主要内容区域 -->
     <main class="main-content">
-      <MainPage />
+      <router-view />
     </main>
+    <Footer />
   </div>
 </template>
 
 <script>
-import MainPage from './components/MainPage.vue'
+import Footer from './components/Footer.vue'
 
 export default {
   name: 'App',
   components: {
-    MainPage
+    Footer
   }
 }
 </script>
@@ -146,13 +147,12 @@ body {
 .right-section {
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: 0px;
   flex-shrink: 0;
 }
-
-/* 导航区域 */
 .navigation {
   display: flex;
+  margin-left: 20px;
 }
 
 .nav-list {
@@ -160,33 +160,28 @@ body {
   padding: 0;
   margin: 0;
   display: flex;
-  gap: 30px;
+  gap: 10px;
 }
 
-.nav-item {
-  margin: 0;
-}
 
 .nav-link {
   display: block;
-  padding: 12px 16px;
+  padding: 8px 12px;
   color: white;
   text-decoration: none;
   font-size: 16px;
   font-weight: 500;
-  border-radius: 8px;
   transition: all 0.3s ease;
-  position: relative;
 }
 
 .nav-link:hover {
-  background: #333;
+  background: transparent;
   color: #ff8c00;
 }
 
 .nav-link.active {
   color: #ff8c00;
-  background: rgba(255, 140, 0, 0.1);
+  background: transparent;
 }
 
 /* 操作按钮 */
@@ -194,6 +189,7 @@ body {
   display: flex;
   gap: 12px;
   flex-shrink: 0;
+  margin-left: 60px;
 }
 
 .btn {

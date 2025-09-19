@@ -60,39 +60,69 @@
     <section class="promo-slider-section">
       <div class="promo-slider">
         <div class="promo-left">
-          <h2 class="promo-title">{{ activeTitle }}</h2>
-          <a href="#" class="promo-link">Find out more</a>
+          <div class="title-slider">
+            <div class="title-track" :class="{ 'no-transition': isDragging }" :style="titleTrackStyle">
+              <div class="title-item" v-for="(t, i) in titles" :key="'title-'+i">
+                <h2 class="promo-title">{{ t }}</h2>
+                <a href="#" class="promo-link">Find out more</a>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="promo-right">
-          <transition-group name="fade" tag="div" class="slides">
-            <img v-for="(img, i) in images" :key="i + '-' + currentIndex" v-show="i === currentIndex" src="/people.png" alt="slide" class="slide-img" />
-          </transition-group>
+        <div class="promo-right" ref="promoRight"
+             @mousedown="startDrag"
+             @mousemove="onDrag"
+             @mouseup="endDrag"
+             @mouseleave="endDrag"
+             @touchstart.passive="startDrag"
+             @touchmove.passive="onDrag"
+             @touchend="endDrag">
+          <div class="slides">
+            <div class="slides-track" :class="{ 'no-transition': isDragging }" :style="trackStyle">
+              <div class="slide-item" v-for="(img, i) in images" :key="'slide-'+i">
+                <img src="/people.png" alt="slide" class="slide-img" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="promo-dots">
         <span v-for="(t, i) in titles" :key="'dot-' + i" :class="['dot', { active: i === currentIndex }]" @click="goTo(i)" @mouseenter="goTo(i)" @touchstart.prevent="goTo(i)"></span>
       </div>
     </section>
+
+    <!-- 新的背景2横幅区（放在轮播区下方，并留空白） -->
+    <div class="after-slider">
+      <HeroBackground2 />
+    </div>
   </div>
 </template>
 
 <script>
 import HeroSection from './HeroSection.vue'
+import HeroBackground2 from './HeroBackground2.vue'
 export default {
   name: 'MainPage',
-  components: { HeroSection },
+  components: { HeroSection, HeroBackground2 },
   data() {
     return {
       titles: ['FAQ', 'NID Branch', 'Contact us', 'Login without password', 'Forgot Password'],
       images: [0,1,2,3,4],
       currentIndex: 0,
-      _sliderTimer: null
+      _sliderTimer: null,
+      // 滑动相关
+      isDragging: false,
+      dragStartX: 0,
+      dragDeltaX: 0,
+      containerWidth: 0
     }
   },
   mounted() {
     this.observeWhiteLayer();
     this.observeStats();
     this.startSlider();
+    this.setContainerWidth();
+    window.addEventListener('resize', this.setContainerWidth);
   },
   beforeUnmount() {
     if (this._observer) {
@@ -104,6 +134,7 @@ export default {
     if (this._sliderTimer) {
       clearInterval(this._sliderTimer);
     }
+    window.removeEventListener('resize', this.setContainerWidth);
   },
   methods: {
     observeWhiteLayer() {
@@ -148,16 +179,68 @@ export default {
       if (this._sliderTimer) clearInterval(this._sliderTimer);
       this._sliderTimer = setInterval(() => {
         this.currentIndex = (this.currentIndex + 1) % this.images.length;
-      }, 1000);
+      }, 2000);
     },
     goTo(i) {
       this.currentIndex = i;
       this.startSlider();
+    },
+    setContainerWidth() {
+      const el = this.$refs.promoRight;
+      if (!el) return;
+      this.containerWidth = el.clientWidth || 0;
+    },
+    getEventX(evt) {
+      if (evt.touches && evt.touches.length) return evt.touches[0].clientX;
+      return evt.clientX;
+    },
+    startDrag(evt) {
+      if (!this.containerWidth) this.setContainerWidth();
+      this.isDragging = true;
+      this.dragStartX = this.getEventX(evt);
+      this.dragDeltaX = 0;
+      if (this._sliderTimer) clearInterval(this._sliderTimer);
+    },
+    onDrag(evt) {
+      if (!this.isDragging) return;
+      const x = this.getEventX(evt);
+      this.dragDeltaX = x - this.dragStartX;
+    },
+    endDrag() {
+      if (!this.isDragging) return;
+      const threshold = Math.max(40, this.containerWidth * 0.1);
+      if (this.dragDeltaX > threshold) {
+        // 向右滑，上一张
+        this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+      } else if (this.dragDeltaX < -threshold) {
+        // 向左滑，下一张
+        this.currentIndex = (this.currentIndex + 1) % this.images.length;
+      }
+      this.isDragging = false;
+      this.dragDeltaX = 0;
+      this.startSlider();
     }
   },
   computed: {
-    activeTitle() {
-      return this.titles[this.currentIndex];
+    trackStyle() {
+      // 基础位移：当前索引的整屏宽度
+      const base = -this.currentIndex * this.containerWidth;
+      const drag = this.isDragging ? this.dragDeltaX : 0;
+      const translate = base + drag;
+      return {
+        transform: `translateX(${translate}px)`
+      };
+    },
+    titleTrackStyle() {
+      // 使用百分比便于自适应：同时叠加拖拽位移按比例换算
+      const basePercent = -this.currentIndex * 100;
+      const dragPercent = this.isDragging && this.containerWidth
+        ? (this.dragDeltaX / this.containerWidth) * 100
+        : 0;
+      const translate = basePercent + dragPercent;
+      return {
+        transform: `translateX(${translate}%)`
+      };
     }
   }
 }
@@ -196,18 +279,53 @@ export default {
   gap: 36px;
   position: relative;
   z-index: 4;
-  margin-top: -160px; /* 上移覆盖到上方横幅 */
+  margin-top: -200px; /* 增加上移距离，让卡片覆盖到橙色部分 */
   margin-bottom: 64px;
 }
 
-/* 层叠布局：左右卡片与中间卡片相互覆盖 */
+/* 水平布局：卡片水平排列，第一张和第三张卡片有轻微覆盖效果 */
 .cards.layered {
-  gap: 0;
+  flex-direction: row;
+  gap: 40px;
+  justify-content: center;
+  align-items: flex-end;
 }
-.cards.layered .card-item + .card-item { margin-left: -80px; }
-.cards.layered .card-item:nth-child(1) { z-index: 2; transform: translateY(18px) rotate(-2deg); }
-.cards.layered .card-item:nth-child(2) { z-index: 3; transform: translateY(-8px); }
-.cards.layered .card-item:nth-child(3) { z-index: 1; transform: translateY(18px) rotate(2deg); }
+.cards.layered .card-item + .card-item { margin-left: -10px; }
+.cards.layered .card-item:nth-child(1) { 
+  z-index: 1; 
+  transform: translateY(10px); 
+  max-width: 320px;
+  min-width: 300px;
+  height: 250px;
+  padding: 25px 28px;
+}
+.cards.layered .card-item:nth-child(2) { 
+  z-index: 3; 
+  transform: translateY(0px) scale(0.9); 
+  max-width: 350px;
+  min-width: 320px;
+  height: 320px;
+  padding: 20px 30px;
+}
+
+.cards.layered .card-item:nth-child(2) .card-media {
+  height: 120px;
+  margin-bottom: 16px;
+}
+
+.cards.layered .card-item:nth-child(1) .card-media,
+.cards.layered .card-item:nth-child(3) .card-media {
+  height: 140px;
+  margin-bottom: 20px;
+}
+.cards.layered .card-item:nth-child(3) { 
+  z-index: 1; 
+  transform: translateY(10px); 
+  max-width: 320px;
+  min-width: 300px;
+  height: 250px;
+  padding: 25px 28px;
+}
 
 /* 出现后再叠加位移覆盖（可与出现动画叠加）*/
 .cards.is-visible.layered .card-item:nth-child(1),
@@ -219,7 +337,7 @@ export default {
 .card-item {
   flex: 1 1 0;
   min-width: 280px;
-  max-width: 33%;
+  max-width: 320px;
   background: #fff;
   border-radius: 24px;
   box-shadow: 0 24px 80px rgba(0,0,0,0.12);
@@ -356,21 +474,33 @@ export default {
   margin: 0 auto;
   padding: 0 20px;
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: 0.8fr 1.4fr;
   gap: 24px;
   align-items: center;
 }
-.promo-left { padding: 40px 20px; }
-.promo-title { font-size: 51px; font-weight: 900; margin: 0 0 20px; }
+.promo-left { padding: 40px 20px; position: relative; z-index: 1; }
+.title-slider { position: relative; width: 100%; overflow: hidden; max-width: 560px; }
+.title-track { display: flex; width: 100%; transition: transform .35s ease; }
+.title-track.no-transition { transition: none; }
+.title-item { flex: 0 0 100%; padding-right: 24px; }
+.promo-title { font-size: 51px; font-weight: 900; margin: 0 0 20px; max-width: 600px; white-space: normal; }
 .promo-link { color: #ff6a00; font-weight: 700; text-decoration: none; font-size: 22px; }
-.promo-right { position: relative; width: 100%; height: 336px; overflow: hidden; border-bottom-left-radius: 96px; }
-.slides { position: relative; width: 100%; height: 100%; }
+.promo-right { position: relative; width: 100%; height: 336px; overflow: hidden; border-bottom-left-radius: 220px; z-index: 2; }
+.slides { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.slides-track { position: absolute; top: 0; left: 0; height: 100%; width: 100%; display: flex; transition: transform .35s ease; }
+.slides-track.no-transition { transition: none; }
+.slide-item { flex: 0 0 100%; height: 100%; position: relative; }
 .slide-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .fade-enter-active, .fade-leave-active { transition: opacity .6s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .promo-dots { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: #d0d0d0; cursor: pointer; }
 .dot.active { background: #ff6a00; }
+
+/* 轮播区下方预留空白 */
+.after-slider {
+  margin: 60px 0 100px;
+}
 
 /* 响应式设计 */
 @media (max-width: 1024px) {
@@ -389,7 +519,7 @@ export default {
   .cards.layered .card-item:nth-child(1),
   .cards.layered .card-item:nth-child(2),
   .cards.layered .card-item:nth-child(3) {
-    transform: none;
+    transform:none ;
   }
   .card-item {
     max-width: 100%;
@@ -405,6 +535,8 @@ export default {
   }
   .stat-number { font-size: 48px; }
   .stat-label { font-size: 18px; }
+  /* 移动端标题滑块占满宽度 */
+  .title-slider { max-width: 100%; }
 }
 
 @media (max-width: 480px) {
