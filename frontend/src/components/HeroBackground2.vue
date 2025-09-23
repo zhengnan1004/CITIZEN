@@ -56,7 +56,7 @@ export default {
       elementTop: 0,
       elementHeight: 0,
       //组件进入视口前就开始动画
-      startLead: 200,
+      startLead: 400,
       // 最远位置
       farthestPositions: {
         topLeft: { dx: -150, dy: 200 },
@@ -117,13 +117,16 @@ export default {
       const phonePreview = document.querySelector('.hero2__image--center-phone') 
       if (phonePreview) {
         const scrollFromTop = this.scrollY - (this.elementTop - this.startLead);
-        const maxScrollInElement = this.elementHeight * 0.3;
-        const rawProgress = Math.min(scrollFromTop / maxScrollInElement, 1);
+        // 延长放大所需的滚动距离，让放大速度更慢更顺滑
+        const maxScrollInElement = this.elementHeight * 0.6;
+        const rawProgress = Math.min(Math.max(scrollFromTop / maxScrollInElement, 0), 1);
 
-        // 向下滚动放大：进度越大，scale 越大（1 → 1.3）
-        const scaleProgress = this.easeOutQuart(rawProgress);
-        const scale = 1 + scaleProgress * 0.3;
+        // 从不可见且 scale(0) 渐变到不透明且 scale(1)
+        const eased = this.easeOutQuart(rawProgress);
+        const scale = 0 + eased * 1;
+        const opacity = eased;
         phonePreview.style.transform = `translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(${scale})`;
+        phonePreview.style.opacity = opacity.toString();
       }
     },
     
@@ -155,16 +158,25 @@ export default {
       this.updateCardPosition('top-left', this.closestPositions.topLeft, this.farthestPositions.topLeft, 0)
       this.updateCardPosition('top-right', this.closestPositions.topRight, this.farthestPositions.topRight, 0)
       this.updateCardPosition('bottom-right', this.closestPositions.bottomRight, this.farthestPositions.bottomRight, 0)
+      // 手机预览回到不可见且缩小
+      const phonePreview = document.querySelector('.hero2__image--center-phone')
+      if (phonePreview) {
+        phonePreview.style.transform = `translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0)`;
+        phonePreview.style.opacity = '0';
+      }
     },
     
     updateCardPosition(cardClass, closestPos, farthestPos, progress) {
       const element = document.querySelector(`.hero2__image--${cardClass}`)
       if (element) {
+        const eased = this.easeOutQuart(progress)
         const newDx = closestPos.dx + (farthestPos.dx - closestPos.dx) * progress
         const newDy = closestPos.dy + (farthestPos.dy - closestPos.dy) * progress
         
         element.style.setProperty('--dx', `${newDx}px`)
         element.style.setProperty('--dy', `${newDy}px`)
+        element.style.setProperty('--scale', `${eased}`)
+        element.style.setProperty('--opacity', `${eased}`)
       }
     },
     
@@ -250,8 +262,11 @@ export default {
   left: 50%;
   --dx: 0px;
   --dy: 0px;
-  transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
-  transition: transform 0.1s ease-out;
+  --scale: 0; /* 初始缩放为0 */
+  --opacity: 0; /* 初始透明 */
+  transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(var(--scale));
+  opacity: var(--opacity);
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out;
 }
 
 .hero2__img {
@@ -320,8 +335,9 @@ export default {
   --dy: -10px;
   width: 200px;
   height: 450px;
-  transition: transform 0.1s ease-out; /* 加上过渡 */
+  transition: transform 0.35s ease-out, opacity 0.35s ease-out; /* 平滑缩放与淡入 */
   transform-origin: center center; /* 确保缩放时围绕中心 */
+  opacity: 0; /* 初始不可见 */
 }
 
 

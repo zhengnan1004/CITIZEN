@@ -8,6 +8,32 @@
         <div class="right-visual">
           <img src="/smile.png" alt="Application Status page banner" />
         </div>
+        <router-link to="/contact" class="help-link">Need Help?</router-link>
+      </div>
+    </div>
+
+    <div class="track-wrapper">
+      <div class="track-card">
+        <div class="track-inner">
+          <h3 class="track-title">Track Application</h3>
+          <p class="track-tip">Please enter the Application No when you applied.</p>
+
+          <form class="track-form" @submit.prevent="handleNext">
+            <label class="form-label" for="appNo">Application No <span class="required">*</span></label>
+            <div class="input-row">
+              <input
+                id="appNo"
+                v-model.trim="applicationNo"
+                class="app-input"
+                type="text"
+                placeholder="Enter Application No"
+                required
+              />
+            </div>
+
+            <button class="next-btn" :class="{ disabled: !canProceed }" :disabled="!canProceed" type="submit">Next</button>
+          </form>
+        </div>
       </div>
     </div>
   </section>
@@ -15,7 +41,23 @@
 
 <script>
 export default {
-  name: 'Application'
+  name: 'Application',
+  data() {
+    return {
+      applicationNo: ''
+    }
+  },
+  computed: {
+    canProceed() {
+      return this.applicationNo.trim().length > 0
+    }
+  },
+  methods: {
+    handleNext() {
+      // 这里先简单打印，后续可接入真实查询接口
+      console.log('Application No:', this.applicationNo)
+    }
+  }
 }
 </script>
 
@@ -36,6 +78,7 @@ export default {
   grid-template-columns: 1fr 1.3fr;
   align-items: end;
   gap: 20px;
+  position: relative;
 }
 
 .left-copy {
@@ -55,6 +98,16 @@ export default {
   background-position: 0 78%;
 }
 
+.help-link {
+  position: absolute;
+  right: 100px;
+  bottom: -30px;
+  color: #ea601b;
+  text-decoration: none;
+  font-weight: 600;
+  z-index: 1;
+}
+
 .right-visual {
   justify-self: stretch;
   width: 100%;
@@ -70,6 +123,99 @@ export default {
   object-position: center;
   display: block;
 }
+
+/* 查询区块 */
+.track-wrapper {
+  padding: 40px 16px 80px 16px;
+}
+
+.track-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.track-inner {
+  margin: 32px;
+  background: #f7f6f5;
+  border-radius: 6px;
+  padding: 40px 24px 32px 24px;
+}
+
+.track-title {
+  text-align: center;
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.track-tip {
+  text-align: center;
+  color: #5d5d5d;
+  margin-bottom: 28px;
+}
+
+.track-form {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  width: 60%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.required { color: #ea601b; }
+
+.input-row {
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.app-input {
+  width: 60%;
+  height: 54px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  padding: 0 16px;
+  font-size: 16px;
+  outline: none;
+  display: block;
+  margin: 0 auto;
+}
+
+.app-input:focus { border-color: #ff8c00; }
+
+.next-btn {
+  width: 220px;
+  height: 52px;
+  border: none;
+  border-radius: 6px;
+  background: #bfbfbf;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: not-allowed;
+  display: block;
+  margin: 0 auto;
+}
+
+.next-btn:not(.disabled) {
+  background: #ff8c00;
+  cursor: pointer;
+}
+
+.next-btn:not(.disabled):hover { background: #e67e00; }
 
 @media (max-width: 1024px) {
   .banner-inner {
@@ -99,5 +245,7 @@ export default {
     height: 220px;
     border-bottom-left-radius: 90px;
   }
+  .track-inner { margin: 16px; padding: 24px 16px; }
+  .track-title { font-size: 28px; }
 }
 </style>

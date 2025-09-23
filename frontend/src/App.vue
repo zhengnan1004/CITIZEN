@@ -5,13 +5,15 @@
       <div class="header-container">
         <!-- Logo和Portal名称 -->
         <div class="logo-section">
-          <div class="logo">
-            <img src="https://enid-dev.ilmnhub.com/assets/logo-BYgfMcyp.svg" alt="CITIZEN Logo" class="logo-img" />
-          </div>
-          <div class="portal-name">
-            <h1 class="citizen-text">CITIZEN</h1>
-            <p class="nid-portal-text">NID PORTAL</p>
-          </div>
+          <router-link to="/" class="logo-link">
+            <div class="logo">
+              <img src="https://enid-dev.ilmnhub.com/assets/logo-BYgfMcyp.svg" alt="CITIZEN Logo" class="logo-img" />
+            </div>
+            <div class="portal-name">
+              <h1 class="citizen-text">CITIZEN</h1>
+              <p class="nid-portal-text">NID PORTAL</p>
+            </div>
+          </router-link>
         </div>
 
         <!-- 右侧导航和按钮区域 -->
@@ -32,18 +34,18 @@
                 <router-link to="/application" class="nav-link" :class="{ active: $route.path.startsWith('/application') }">Application Status</router-link>
               </li>
               <li class="nav-item">
-                <router-link to="/contact" class="nav-link" :class="{ active: $route.path.startsWith('/contact') }">Contact Us</router-link>
+                <router-link to="/contact" class="nav-link" :class="{ active: $route.path.startsWith('/contact') || $route.path.startsWith('/inquiry') }">Contact Us</router-link>
               </li>
               <li class="nav-item">
-                <router-link to="/faq" class="nav-link" :class="{ active: $route.path.startsWith('/faq') }">FAQ</router-link>
+                <router-link to="/faq" class="nav-link" :class="{ active: $route.path.startsWith('/faq') || $route.path.startsWith('/question') }">FAQ</router-link>
               </li>
             </ul>
           </nav>
 
           <!-- 操作按钮 -->
           <div class="action-buttons">
-            <button class="btn btn-login">Login</button>
-            <button class="btn btn-register">Register</button>
+            <router-link to="/login" class="btn btn-login">Login</router-link>
+            <button class="btn btn-register" @click="showRegisterModal = true">Register</button>
           </div>
         </div>
       </div>
@@ -54,6 +56,28 @@
       <router-view />
     </main>
     <Footer />
+
+    <!-- Register 弹窗 -->
+    <div v-if="showRegisterModal" class="modal-overlay" @click.self="showRegisterModal = false">
+      <div class="modal-card">
+        <button class="modal-close" @click="showRegisterModal = false">×</button>
+        <h3 class="modal-title">eNID Register</h3>
+        <p class="modal-sub">Have you already got a physical National ID?</p>
+
+        <div class="modal-options">
+          <button class="option primary" @click="goExisting">
+            <span class="opt-title">Yes, I already have an NID</span>
+            <span class="opt-sub">Continue with my existing NID</span>
+            <span class="arrow">→</span>
+          </button>
+          <button class="option outline" @click="goNew">
+            <span class="opt-title">No, I haven't applied yet</span>
+            <span class="opt-sub">Start a new application</span>
+            <span class="arrow">→</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -64,6 +88,21 @@ export default {
   name: 'App',
   components: {
     Footer
+  },
+  data() {
+    return {
+      showRegisterModal: false
+    }
+  },
+  methods: {
+    goExisting() {
+      this.showRegisterModal = false
+      this.$router.push('/login')
+    },
+    goNew() {
+      this.showRegisterModal = false
+      this.$router.push('/register')
+    }
   }
 }
 </script>
@@ -110,6 +149,8 @@ body {
   align-items: center;
   flex-shrink: 0;
 }
+
+.logo-link { display: inline-flex; align-items: center; text-decoration: none; color: inherit; }
 
 .logo {
   margin-right: 15px;
@@ -202,6 +243,7 @@ body {
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-decoration: none;
 }
 
 .btn-login {
@@ -231,6 +273,85 @@ body {
 /* 主要内容区域 */
 .main-content {
   min-height: calc(100vh - 80px);
+}
+
+/* Modal 样式 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px;
+  width: min(900px, 92vw);
+  height: 300px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.modal-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.modal-sub {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.modal-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.option {
+  position: relative;
+  border-radius: 10px;
+  padding: 18px 20px;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid #ff8c00;
+  background: #fff;
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+}
+
+.option .opt-title { font-size: 20px; font-weight: 700; display: block; margin-bottom: 6px; }
+.option .opt-sub { color: #666; font-size: 14px; }
+.option .arrow { position: absolute; right: 14px; bottom: 14px; font-size: 18px; color: #ff8c00; }
+
+.option.primary {
+  background: #ff8c00;
+  color: #fff;
+  border-color: #ff8c00;
+}
+.option.primary .opt-sub { color: #fff; opacity: .95; }
+.option.primary .arrow { color: #fff; }
+
+.option:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.15); }
+
+@media (max-width: 640px) {
+  .modal-card { padding: 20px; }
+  .modal-options { grid-template-columns: 1fr; }
 }
 
 /* 响应式设计 */

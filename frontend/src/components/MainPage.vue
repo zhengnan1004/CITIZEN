@@ -56,32 +56,26 @@
       </div>
     </section>
     
-    <!-- 图片播放器区 -->
+    <!-- 图片播放器区（合并左右为一张滑块） -->
     <section class="promo-slider-section">
-      <div class="promo-slider">
-        <div class="promo-left">
-          <div class="title-slider">
-            <div class="title-track" :class="{ 'no-transition': isDragging }" :style="titleTrackStyle">
-              <div class="title-item" v-for="(t, i) in titles" :key="'title-'+i">
+      <div class="combo-slider" ref="promoRight"
+           @mousedown="startDrag"
+           @mousemove="onDrag"
+           @mouseup="endDrag"
+           @mouseleave="endDrag"
+           @touchstart.passive="startDrag"
+           @touchmove.passive="onDrag"
+           @touchend="endDrag">
+        <div class="combo-track" :class="{ 'no-transition': isDragging }" :style="comboTrackStyle">
+          <div class="combo-slide" v-for="(t, i) in titles" :key="'combo-'+i">
+            <div class="combo-left">
+              <div class="title-wrap">
                 <h2 class="promo-title">{{ t }}</h2>
                 <a href="#" class="promo-link">Find out more</a>
               </div>
             </div>
-          </div>
-        </div>
-        <div class="promo-right" ref="promoRight"
-             @mousedown="startDrag"
-             @mousemove="onDrag"
-             @mouseup="endDrag"
-             @mouseleave="endDrag"
-             @touchstart.passive="startDrag"
-             @touchmove.passive="onDrag"
-             @touchend="endDrag">
-          <div class="slides">
-            <div class="slides-track" :class="{ 'no-transition': isDragging }" :style="trackStyle">
-              <div class="slide-item" v-for="(img, i) in images" :key="'slide-'+i">
-                <img src="/people.png" alt="slide" class="slide-img" />
-              </div>
+            <div class="combo-right">
+              <img src="/people.png" alt="slide" class="combo-img" />
             </div>
           </div>
         </div>
@@ -107,7 +101,6 @@ export default {
   data() {
     return {
       titles: ['FAQ', 'NID Branch', 'Contact us', 'Login without password', 'Forgot Password'],
-      images: [0,1,2,3,4],
       currentIndex: 0,
       _sliderTimer: null,
       // 滑动相关
@@ -122,6 +115,14 @@ export default {
     this.observeStats();
     this.startSlider();
     this.setContainerWidth();
+    // 监听滑块容器尺寸变化
+    const container = this.$refs.promoRight;
+    if (container && 'ResizeObserver' in window) {
+      this._resizeObserver = new ResizeObserver(() => {
+        this.setContainerWidth();
+      });
+      this._resizeObserver.observe(container);
+    }
     window.addEventListener('resize', this.setContainerWidth);
   },
   beforeUnmount() {
@@ -133,6 +134,9 @@ export default {
     }
     if (this._sliderTimer) {
       clearInterval(this._sliderTimer);
+    }
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
     }
     window.removeEventListener('resize', this.setContainerWidth);
   },
@@ -178,7 +182,7 @@ export default {
     startSlider() {
       if (this._sliderTimer) clearInterval(this._sliderTimer);
       this._sliderTimer = setInterval(() => {
-        this.currentIndex = (this.currentIndex + 1) % this.images.length;
+        this.currentIndex = (this.currentIndex + 1) % this.titles.length;
       }, 2000);
     },
     goTo(i) {
@@ -188,7 +192,10 @@ export default {
     setContainerWidth() {
       const el = this.$refs.promoRight;
       if (!el) return;
-      this.containerWidth = el.clientWidth || 0;
+      const firstSlide = el.querySelector('.combo-slide');
+      // 容器没有左右 padding，直接按容器宽度即可保证 100% 一屏
+      const width = firstSlide ? firstSlide.clientWidth : el.clientWidth;
+      this.containerWidth = width || 0;
     },
     getEventX(evt) {
       if (evt.touches && evt.touches.length) return evt.touches[0].clientX;
@@ -211,10 +218,10 @@ export default {
       const threshold = Math.max(40, this.containerWidth * 0.1);
       if (this.dragDeltaX > threshold) {
         // 向右滑，上一张
-        this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+        this.currentIndex = (this.currentIndex - 1 + this.titles.length) % this.titles.length;
       } else if (this.dragDeltaX < -threshold) {
         // 向左滑，下一张
-        this.currentIndex = (this.currentIndex + 1) % this.images.length;
+        this.currentIndex = (this.currentIndex + 1) % this.titles.length;
       }
       this.isDragging = false;
       this.dragDeltaX = 0;
@@ -222,25 +229,15 @@ export default {
     }
   },
   computed: {
-    trackStyle() {
-      // 基础位移：当前索引的整屏宽度
+    comboTrackStyle() {
+      // 当前展示的基础偏移量（根据索引计算）
       const base = -this.currentIndex * this.containerWidth;
+      // 如果正在拖拽，计算拖动的偏移量；否则为 0
       const drag = this.isDragging ? this.dragDeltaX : 0;
+      // 轨道实际偏移量 = 当前索引位置 + 拖动中的临时位移
       const translate = base + drag;
-      return {
-        transform: `translateX(${translate}px)`
-      };
-    },
-    titleTrackStyle() {
-      // 使用百分比便于自适应：同时叠加拖拽位移按比例换算
-      const basePercent = -this.currentIndex * 100;
-      const dragPercent = this.isDragging && this.containerWidth
-        ? (this.dragDeltaX / this.containerWidth) * 100
-        : 0;
-      const translate = basePercent + dragPercent;
-      return {
-        transform: `translateX(${translate}%)`
-      };
+      // 返回给模板绑定的 style
+      return { transform: `translateX(${translate}px)` };
     }
   }
 }
@@ -279,7 +276,7 @@ export default {
   gap: 36px;
   position: relative;
   z-index: 4;
-  margin-top: -200px; /* 增加上移距离，让卡片覆盖到橙色部分 */
+  margin-top: -100px; /* 减少上移距离，增加上下部分的间距 */
   margin-bottom: 64px;
 }
 
@@ -423,7 +420,7 @@ export default {
   position: relative;
   background: #111 url('/statisticsBg-D_n8gkQd.png') center center / cover no-repeat;
   color: #fff;
-  padding: 80px 0;
+  padding: 40px 0;
 }
 
 .statistics-container {
@@ -467,30 +464,19 @@ export default {
 /* 图片播放器样式 */
 .promo-slider-section {
   background: #f5f4f3;
-  padding: 40px 0 80px;
+  padding: 20px 0 80px;
 }
-.promo-slider {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: grid;
-  grid-template-columns: 0.8fr 1.4fr;
-  gap: 24px;
-  align-items: center;
-}
-.promo-left { padding: 40px 20px; position: relative; z-index: 1; }
-.title-slider { position: relative; width: 100%; overflow: hidden; max-width: 560px; }
-.title-track { display: flex; width: 100%; transition: transform .35s ease; }
-.title-track.no-transition { transition: none; }
-.title-item { flex: 0 0 100%; padding-right: 24px; }
 .promo-title { font-size: 51px; font-weight: 900; margin: 0 0 20px; max-width: 600px; white-space: normal; }
 .promo-link { color: #ff6a00; font-weight: 700; text-decoration: none; font-size: 22px; }
-.promo-right { position: relative; width: 100%; height: 336px; overflow: hidden; border-bottom-left-radius: 220px; z-index: 2; }
-.slides { position: relative; width: 100%; height: 100%; overflow: hidden; }
-.slides-track { position: absolute; top: 0; left: 0; height: 100%; width: 100%; display: flex; transition: transform .35s ease; }
-.slides-track.no-transition { transition: none; }
-.slide-item { flex: 0 0 100%; height: 100%; position: relative; }
-.slide-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* 合并结构样式 */
+.combo-slider { max-width: 1200px; margin: 0 auto; padding: 0; position: relative; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+.combo-track { display: flex; width: 100%; transition: transform .35s ease; will-change: transform; }
+.combo-track.no-transition { transition: none; }
+.combo-slide { flex: 0 0 100%; min-width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
+.combo-left { padding: 40px 20px; }
+.combo-right { position: relative; width: clamp(520px, 46vw, 720px); height: clamp(300px, 32vw, 360px); overflow: hidden; border-bottom-left-radius: 220px; }
+.combo-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .fade-enter-active, .fade-leave-active { transition: opacity .6s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .promo-dots { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
@@ -499,7 +485,7 @@ export default {
 
 /* 轮播区下方预留空白 */
 .after-slider {
-  margin: 60px 0 100px;
+  margin: 200px 0 250px;
 }
 
 /* 响应式设计 */
@@ -537,6 +523,14 @@ export default {
   .stat-label { font-size: 18px; }
   /* 移动端标题滑块占满宽度 */
   .title-slider { max-width: 100%; }
+  /* 移动端轮播区域间距调整 */
+  .promo-slider-section {
+    padding: 60px 0 60px;
+  }
+  /* 移动端轮播区下方空白调整 */
+  .after-slider {
+    margin: 120px 0 150px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -550,6 +544,15 @@ export default {
   
   .description-text {
     font-size: 16px;
+  }
+  
+  /* 小屏幕轮播区域间距调整 */
+  .promo-slider-section {
+    padding: 50px 0 50px;
+  }
+  /* 小屏幕轮播区下方空白调整 */
+  .after-slider {
+    margin: 100px 0 120px;
   }
 }
 </style>

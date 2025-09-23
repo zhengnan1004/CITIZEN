@@ -16,7 +16,7 @@
           <ul class="col-links">
             <li><a href="#">Register</a></li>
             <li><a href="#">Citizen NID Portal</a></li>
-            <li><a href="#">Forgot Password?</a></li>
+            <li><router-link to="/forget">Forgot Password?</router-link></li>
           </ul>
         </div>
         <div class="footer-col">
@@ -54,7 +54,7 @@
               <a href="#" class="store-link" aria-label="Download on the App Store">
                 <img src="/appleMinio.svg" alt="App Store" />
               </a>
-              <a href="#" class="store-link" aria-label="Get it on Google Play">
+              <a href="https://play.google.com/store/apps/details?id=com.enid.app" target="_blank" rel="noopener" class="store-link" aria-label="Get it on Google Play">
                 <img src="/previewMinio.svg" alt="Google Play" />
               </a>
             </div>
@@ -66,7 +66,7 @@
     <div class="footer-bottom">
       <div class="bottom-left">© PNGCIR - All rights reserved 2025.</div>
       <div class="bottom-center">
-        <a href="#">Privacy Policy</a>
+        <router-link to="/privacy">Privacy Policy</router-link>
         <span class="dot">•</span>
         <a href="#">Terms Of Use</a>
       </div>

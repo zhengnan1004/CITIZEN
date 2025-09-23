@@ -27,7 +27,11 @@
           <a href="#" class="nav-link">Application Status</a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">Contact Us</a>
+          <router-link
+            to="/contact"
+            class="nav-link"
+            :class="{ active: $route.path.startsWith('/contact') || $route.path.startsWith('/inquiry') }"
+          >Contact Us</router-link>
         </li>
         <li class="nav-item">
           <a href="#" class="nav-link">FAQ</a>
